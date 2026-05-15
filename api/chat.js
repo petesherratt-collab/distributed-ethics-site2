@@ -1,57 +1,45 @@
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Basic CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  const { messages, system } = req.body;
-
-  if (!messages || !system) {
-    return res.status(400).json({ error: 'Missing messages or system prompt' });
-  }
-
-  // API key lives only on the server — users never see it
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'Server configuration error' });
+    return res.status(500).json({ error: 'API key not configured' });
   }
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const { model, max_tokens, system, messages } = req.body;
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'HTTP-Referer': process.env.SITE_URL || 'https://distributed-ethics-site2.vercel.app',
+        'X-Title': 'Distributed Ethics'
       },
       body: JSON.stringify({
         model: 'anthropic/claude-sonnet-4.5',
-        max_tokens: 1024,
-        system,
-        messages,
-      }),
+        max_tokens: max_tokens || 1000,
+        messages: system
+          ? [{ role: 'system', content: system }, ...messages]
+          : messages
+      })
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      return res.status(response.status).json({ error: error.error?.message || 'API error' });
+    const data = await response.json();
+
+    if (data.choices?.[0]?.message?.content) {
+      return res.status(200).json({
+        content: [{ type: 'text', text: data.choices[0].message.content }]
+      });
     }
 
-    const data = await response.json();
-    const text = data.content?.[0]?.text || '';
-    return res.status(200).json({ response: text });
+    return res.status(200).json(data);
 
-  } catch (err) {
-    console.error('Chat handler error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+  } catch (error) {
+    console.error('Proxy error:', error);
+    return res.status(500).json({ error: 'Proxy request failed' });
   }
 }
