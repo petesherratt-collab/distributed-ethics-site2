@@ -11,7 +11,7 @@ This site is the companion to the working paper. It exists so a policy reader, j
 The four tools
 1 — Hash Verification
 Generate a SHA-256 fingerprint of any document, then verify it against a known hash. Demonstrates the mechanism that makes governance tamper-evident. Computation runs entirely client-side — no content leaves your browser.
-2 — Psychologist Sentinel
+2 — Child Safety Sentinel
 Submit a session transcript and see a clinical assessment through the Sentinel's seven-gate framework: emotional intensity, risk indicators, fictional frame analysis, isolation patterns, crisis signals, disclosure attempts, suppression detection. Uses the C-SSRS, HEEADSSS and PHQ-A clinical frameworks. On a real deployment this runs longitudinally across sessions; here it demonstrates single-session assessment.
 3 — Governance Contrast
 Side-by-side: the same prompt injection attempt against an ungoverned AI versus one operating under a constitutionally authoritative, hash-published protocol. Scenarios include child safeguarding override, medical diagnosis override, gradual erosion attack and rogue agent injection. The "Generate live contrast" call runs against a real model in real time — this is the framework in action, not a video.
