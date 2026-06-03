@@ -54,7 +54,7 @@ For the full argument, the working paper is on Zenodo: doi.org/10.5281/zenodo.20
 
 For policy, research and underwriting readers
 If you've come here from the executive summary or a covering message: the four tools above are designed to be run, not just read about. The Hash Verification tool gives you the mechanism in 30 seconds. The Contrast tool shows the practical difference between governed and ungoverned AI under the same attack. The Policy Advisor will answer specific questions — including hostile ones — about implementation, limitations and the case for voluntary adoption.
-For follow-up: my contact details are on the working paper.
+For follow-up: distributedethics@tuta.com, or my contact details are on the working paper.
 
 Licence
 Code: MIT.
