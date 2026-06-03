@@ -1,7 +1,7 @@
 Distributed Ethics
 A governance framework for AI deployment, demonstrated through four interactive tools.
 Live site → distributed-ethics-site2.vercel.app
-Working paper → doi.org/10.5281/zenodo.20179590
+Working paper → doi.org/10.5281/zenodo.20412543
 
 What this is
 Current AI ethics frameworks produce documents. These documents are asserted at deployment, interpreted elastically in operation, and quietly revised after failure.
@@ -50,7 +50,7 @@ Deploying organisation — the company running the AI. They declare which protoc
 Agent layer — the AI itself, plus a monitoring Sentinel agent assessing every session against the protocol. Session summaries are hashed and chained, batched daily as a Merkle root.
 
 At incident time, the chain of evidence — what protocol was in force, what the AI was actually told, what it actually did — is publicly verifiable. Audit becomes arithmetic.
-For the full argument, the working paper is on Zenodo: doi.org/10.5281/zenodo.20179590.
+For the full argument, the working paper is on Zenodo: doi.org/10.5281/zenodo.20412543.
 
 For policy, research and underwriting readers
 If you've come here from the executive summary or a covering message: the four tools above are designed to be run, not just read about. The Hash Verification tool gives you the mechanism in 30 seconds. The Contrast tool shows the practical difference between governed and ungoverned AI under the same attack. The Policy Advisor will answer specific questions — including hostile ones — about implementation, limitations and the case for voluntary adoption.
@@ -61,4 +61,4 @@ Code: MIT.
 The framework, the working paper, the Sentinel deployment stack and the supporting documents remain my own work. They are published openly to be read, cited and built on; they are not licensed for commercial repackaging without contact.
 
 Peter Sherratt — Mindshare Advisory.
-Distributed Ethics Working Paper 2025 — Fifth Revision.
+Distributed Ethics Working Paper 2026 — Sixth Revision.
