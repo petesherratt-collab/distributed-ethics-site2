@@ -1,0 +1,7 @@
+# Governance documents are SHA-256 hash-anchored (the published hash is over LF
+# bytes). core.autocrlf=true would otherwise rewrite them to CRLF on checkout and
+# break both the runtime hash-check and the OpenTimestamps proof. Pin to LF.
+governance/**/*.md  text eol=lf
+# OpenTimestamps receipts are binary — never apply EOL/text conversion.
+governance/**/*.ots binary
+*.ots               binary
