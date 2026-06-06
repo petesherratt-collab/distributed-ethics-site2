@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "cads": {
+    "meta": {
+      "id": "distributed-ethics-site-meta",
+      "version": "2.1",
+      "file": "cads/distributed-ethics-site-cad-v2.1.md",
+      "expectedHash": "786bc4f65e68c9efe51807bcf7945933de404cfd409bd8650f4a5399d63042dc",
+      "displayHash": "0x786bc4f65e68c9efe51807bcf7945933de404cfd409bd8650f4a5399d63042dc",
+      "doi": "10.5281/zenodo.20412543",
+      "anchor": {
+        "method": "OpenTimestamps", "chain": "Bitcoin",
+        "receipt": "cads/distributed-ethics-site-cad-v2.1.md.ots",
+        "status": "confirmed", "bitcoinBlock": 952238, "timestamp": "2026-06-03T16:29:01Z"
+      }
+    },
+    "clinical": {
+      "id": "clinical-safeguarding-minor",
+      "version": "2.0",
+      "file": "cads/clinical-safeguarding-protocol-minor-v2.md",
+      "expectedHash": "aeff2d668a7b79167e16f3a906eb010b56e012920fccd60af7d4b129bd2eec9d",
+      "displayHash": "0xaeff2d668a7b79167e16f3a906eb010b56e012920fccd60af7d4b129bd2eec9d",
+      "issuingAuthority": "Coalition for Adolescent Mental Health AI Standards (CAMAS)",
+      "anchor": {
+        "method": "OriginStamp", "chain": "Bitcoin",
+        "bitcoinTx": "0x782a9122f4133c40fe6c44c82f6b3bd33305d5dc61dc15d05c2426a587b5e080",
+        "merkleRoot": "0xb59acf725fc43555e876f2a68517816c876b89dcf8ffabe4b8e0fe6b2ce125f2",
+        "status": "confirmed", "timestamp": "2026-05-06T01:11:07Z"
+      }
+    }
+  },
+  "purposes": {
+    "sentinel": { "policy": "policies/sentinel.md",          "cad": "clinical", "maxTokens": 1000 },
+    "contrast": { "policy": "policies/contrast-governed.md", "cad": "meta",     "maxTokens": 400 },
+    "advisor":  { "policy": "policies/advisor.md",           "cad": "meta",     "maxTokens": 1000 }
+  }
+}
