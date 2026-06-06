@@ -48,6 +48,26 @@ export default async function handler(req, res) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
 
+  // ── Origin guard (anti-abuse). The governance checks below stop bypass of the policy, but
+  //    the endpoint is still publicly callable — without this, anyone can `curl /api/chat` in
+  //    a loop and burn the OpenRouter key (denial-of-wallet). Accept requests from the DE site
+  //    itself (Origin/Referer), localhost during dev, or any caller carrying the shared token
+  //    used by trusted server-to-server scripts. Referer is spoofable, so this is a speed-bump
+  //    against casual/automated abuse — the real backstop is the spend cap set on the OpenRouter
+  //    key itself. (CORS still says Allow-Origin: * for the JSON response; this is a separate
+  //    server-side admission check.) ──
+  const ALLOWED   = ['https://distributed-ethics-site2.vercel.app'];
+  const reqOrigin = req.headers.origin || '';
+  const referer   = req.headers.referer || '';
+  const token     = req.headers['x-de-token'] || '';
+  const fromSite  =
+    ALLOWED.some(o => reqOrigin === o || referer === o || referer.startsWith(o + '/')) ||
+    /^https?:\/\/localhost(:\d+)?([/?#]|$)/.test(reqOrigin || referer);
+  const hasToken  = process.env.DE_PROXY_TOKEN && token === process.env.DE_PROXY_TOKEN;
+  if (!fromSite && !hasToken) {
+    return res.status(403).json({ error: 'Forbidden: requests must originate from the Distributed Ethics site.' });
+  }
+
   const { purpose, messages, system } = req.body || {};
 
   // ── No client-supplied governance. The whole point of the gateway: the client may choose a
