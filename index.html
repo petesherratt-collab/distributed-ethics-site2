@@ -481,6 +481,31 @@ input.tool-input::placeholder { color: var(--text-muted); }
 
 .sentinel-output .gate:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 
+/* ── Server verification badge — what the gateway told the browser, not browser theatre ── */
+.gov-badge {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  background: rgba(255,255,255,0.02);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.gov-badge.shown        { display: block; }
+.gov-badge.verified     { border-left-color: var(--green); }
+.gov-badge.unverified   { border-left-color: var(--red); }
+.gov-badge .gb-state    { font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; font-size: 9px; }
+.gov-badge .gb-state.v  { color: var(--green); }
+.gov-badge .gb-state.u  { color: var(--red); }
+.gov-badge .gb-row      { margin-top: 4px; }
+.gov-badge .gb-k        { color: var(--text-muted); }
+.gov-badge .gb-v        { color: var(--text-dim); }
+.gov-badge a            { color: var(--text-dim); text-decoration: underline; text-decoration-color: var(--border); }
+.gov-badge a:hover      { color: var(--green); }
+
 .gate-label {
   font-family: var(--mono);
   font-size: 9px;
@@ -926,6 +951,7 @@ footer a:hover { color: var(--green); }
           <div class="sentinel-output" id="sentinel-output">
             Assessment will appear here. The Sentinel evaluates: emotional intensity, risk indicators, fictional frame analysis, isolation patterns, crisis signals, disclosure attempts, and suppression detection.
           </div>
+          <div class="gov-badge" id="sentinel-gov"></div>
         </div>
       </div>
     </div>
@@ -966,6 +992,7 @@ footer a:hover { color: var(--green); }
         <div class="ba-panel">
           <div class="ba-panel-header governed"><span class="ba-dot green"></span>Governed — constitutionally authoritative protocol</div>
           <div class="ba-panel-body" id="ba-governed"></div>
+          <div class="gov-badge" id="contrast-gov"></div>
         </div>
       </div>
       <div style="text-align: center; margin-top: 20px;">
@@ -1014,6 +1041,7 @@ footer a:hover { color: var(--green); }
         <textarea id="advisor-input" placeholder="Ask about the framework…" rows="1"></textarea>
         <button class="advisor-send" id="advisor-send" onclick="sendAdvisor()">Send</button>
       </div>
+      <div class="gov-badge" id="advisor-gov"></div>
     </div>
   </div>
 </div>
@@ -1080,6 +1108,31 @@ async function loadDemoVerify() {
   document.getElementById('verify-hash').value = hash;
 }
 
+// ─── Shared: server verification badge ───────────────────────────────────────
+// The browser doesn't verify the CAD itself — the gateway does, and reports the result
+// in `_governance`. This renders THAT verdict, not a re-hash done in the browser. The
+// distinction matters: under INTEGRITY-5 of the meta-CAD, a "verified" claim must come
+// from the layer that actually checked, not from a UI that asserts it.
+function trunc(h) { return h ? h.slice(0, 12) + '…' + h.slice(-6) : '—'; }
+function renderGovBadge(elId, gov) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (!gov) { el.className = 'gov-badge'; el.innerHTML = ''; return; }
+  const v = !!gov.protocolVerified;
+  const anchor = gov.anchor || {};
+  const block = anchor.bitcoinBlock || anchor.bitcoinTx;
+  const blockBit = block ? `<a href="https://mempool.space/block/${anchor.bitcoinBlock || ''}" target="_blank" rel="noopener">${anchor.bitcoinBlock ? 'block ' + anchor.bitcoinBlock : 'tx ' + trunc(anchor.bitcoinTx)}</a>` : '—';
+  el.className = 'gov-badge shown ' + (v ? 'verified' : 'unverified');
+  el.innerHTML =
+    `<span class="gb-state ${v ? 'v' : 'u'}">${v ? '✓ Server-verified' : '✗ UNVERIFIED'}</span>` +
+    `<div class="gb-row"><span class="gb-k">CAD:</span> <span class="gb-v">${gov.cadId || '—'} v${gov.version || '?'}</span></div>` +
+    `<div class="gb-row"><span class="gb-k">Hash:</span> <span class="gb-v">${trunc(gov.protocolHash?.replace(/^0x/, ''))}</span></div>` +
+    (gov.computedHash && gov.protocolHash && gov.computedHash !== gov.protocolHash
+      ? `<div class="gb-row"><span class="gb-k">Computed:</span> <span class="gb-v" style="color:var(--red)">${trunc(gov.computedHash.replace(/^0x/, ''))} (mismatch)</span></div>`
+      : '') +
+    `<div class="gb-row"><span class="gb-k">Anchor:</span> <span class="gb-v">${anchor.method || '?'} / ${anchor.chain || '?'} · ${blockBit} · ${anchor.timestamp || ''}</span></div>`;
+}
+
 // ─── Tool 2: Sentinel ────────────────────────────────────────────────────────
 // System prompt moved server-side (governance/policies/sentinel.md); the client now
 // sends only { purpose: 'sentinel' }. The governing CAD is loaded and hash-verified
@@ -1105,8 +1158,10 @@ async function runSentinel() {
     const data = await response.json();
     const text = data.content?.[0]?.text || 'Assessment failed.';
     output.innerHTML = formatSentinelOutput(text);
+    renderGovBadge('sentinel-gov', data._governance);
   } catch (e) {
     output.innerHTML = '<p style="color:var(--red)">Connection error. Please try again.</p>';
+    renderGovBadge('sentinel-gov', null);
   }
 }
 
@@ -1211,8 +1266,10 @@ async function runContrast() {
     const data = await response.json();
     const text = data.content?.[0]?.text || 'Error.';
     governed.innerHTML = text.split('\n').filter(l => l.trim()).map(l => `<p>${l}</p>`).join('');
+    renderGovBadge('contrast-gov', data._governance);
   } catch (e) {
     governed.innerHTML = '<p style="color:var(--red)">Connection error.</p>';
+    renderGovBadge('contrast-gov', null);
   }
 
   btn.disabled = false;
@@ -1276,9 +1333,11 @@ async function sendAdvisor() {
     document.getElementById('adv-loading')?.remove();
     advisorMessages.push({ role: 'assistant', content: reply });
     appendAdvisorMsg('assistant', reply);
+    renderGovBadge('advisor-gov', data._governance);
   } catch (e) {
     document.getElementById('adv-loading')?.remove();
     appendAdvisorMsg('assistant', 'Connection error. Please try again.');
+    renderGovBadge('advisor-gov', null);
   }
 
   advisorLoading = false;
