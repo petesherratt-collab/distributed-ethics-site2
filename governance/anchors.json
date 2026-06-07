@@ -30,8 +30,8 @@
     }
   },
   "purposes": {
-    "sentinel": { "policy": "policies/sentinel.md",          "cad": "clinical", "maxTokens": 1000 },
-    "contrast": { "policy": "policies/contrast-governed.md", "cad": "meta",     "maxTokens": 400 },
-    "advisor":  { "policy": "policies/advisor.md",           "cad": "meta",     "maxTokens": 1000 }
+    "sentinel": { "policy": "policies/sentinel.md",          "cad": "clinical", "maxTokens": 1000, "maxInputTokens": 8000 },
+    "contrast": { "policy": "policies/contrast-governed.md", "cad": "meta",     "maxTokens": 400,  "maxInputTokens": 1000 },
+    "advisor":  { "policy": "policies/advisor.md",           "cad": "meta",     "maxTokens": 1000, "maxInputTokens": 2000 }
   }
 }
