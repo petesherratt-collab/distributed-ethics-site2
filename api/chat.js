@@ -78,6 +78,13 @@ export default async function handler(req, res) {
   if (!purpose || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: 'Request must include a known "purpose" and a non-empty "messages" array.' });
   }
+  // Belt-and-braces: the system block must come from the server. Reject any system-role
+  // *message* embedded in the array (a top-level `system` field check isn't enough — without
+  // this, an attacker can sneak `{role:'system', content:'…'}` into messages and the upstream
+  // gets TWO system messages, with the second one potentially winning).
+  if (messages.some(m => m && m.role !== 'user' && m.role !== 'assistant')) {
+    return res.status(400).json({ error: 'Only user/assistant roles are accepted in "messages"; system is server-owned.' });
+  }
 
   let registry;
   try { registry = loadRegistry(); }
@@ -86,6 +93,28 @@ export default async function handler(req, res) {
   const cfg = registry.purposes?.[purpose];
   if (!cfg) {
     return res.status(400).json({ error: `Unknown purpose "${purpose}". Allowed: ${Object.keys(registry.purposes || {}).join(', ')}` });
+  }
+
+  // ── Ingress token cap. Each purpose declares maxInputTokens in anchors.json. Reject (413) ──
+  //    if the user payload exceeds it, BEFORE any model call. This is the "Ingress Drops" gate:
+  //    bounded surface area for prompt-injection attacks, bounded cost per request, and a
+  //    countable metric for the eval dashboard. Cap by tokens-not-words (a 20k-char blob with
+  //    no spaces is one "word" and thousands of tokens). REJECT, do not truncate — truncation
+  //    can sever an injection mid-payload and leave half a working attack at the boundary.
+  //
+  //    Token count is estimated by character heuristic (~3.5 chars/token, conservative for a
+  //    ceiling — overestimates tokens, so we err toward rejecting early not late). This is
+  //    fine for a hard limit; swap in `tiktoken`/`gpt-tokenizer` if exact counts are needed
+  //    (e.g. for per-request cost reporting). ──
+  const inputChars = messages.reduce((n, m) => n + (typeof m.content === 'string' ? m.content.length : 0), 0);
+  const inputTokensEst = Math.ceil(inputChars / 3.5);
+  const cap = cfg.maxInputTokens || 4000;       // sane default if the purpose forgets to declare one
+  if (inputTokensEst > cap) {
+    return res.status(413).json({
+      error: 'INPUT_TOO_LARGE',
+      detail: `Input for purpose "${purpose}" exceeds the ${cap}-token ceiling (estimated ${inputTokensEst}).`,
+      _ingress: { purpose, tokensIn: inputTokensEst, cap, dropped: true }
+    });
   }
 
   const cadEntry = registry.cads[cfg.cad];
@@ -138,8 +167,13 @@ export default async function handler(req, res) {
     if (!text) return res.status(502).json({ error: 'Empty upstream response', _governance: governance });
 
     // Response shape kept backward-compatible with the front-end (data.content[0].text),
-    // plus _governance so the verification badge reflects the SERVER's verdict, not client hashing.
-    return res.status(200).json({ content: [{ type: 'text', text }], _governance: governance });
+    // plus _governance so the verification badge reflects the SERVER's verdict, not client hashing,
+    // plus _ingress so callers/eval harnesses can log token usage (the "Cost-Defense" metric).
+    return res.status(200).json({
+      content: [{ type: 'text', text }],
+      _governance: governance,
+      _ingress: { purpose, tokensIn: inputTokensEst, cap, dropped: false }
+    });
   } catch (e) {
     return res.status(500).json({ error: 'Proxy request failed', _governance: governance });
   }
