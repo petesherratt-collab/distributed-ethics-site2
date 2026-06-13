@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "cads": {
     "meta": {
       "id": "distributed-ethics-site-meta",
@@ -16,22 +16,70 @@
     },
     "clinical": {
       "id": "clinical-safeguarding-minor",
-      "version": "2.0",
-      "file": "cads/clinical-safeguarding-protocol-minor-v2.md",
-      "expectedHash": "aeff2d668a7b79167e16f3a906eb010b56e012920fccd60af7d4b129bd2eec9d",
-      "displayHash": "0xaeff2d668a7b79167e16f3a906eb010b56e012920fccd60af7d4b129bd2eec9d",
+      "version": "2.1",
+      "file": "cads/clinical-safeguarding-protocol-minor-v2.1.md",
+      "expectedHash": "43f06f43d1b76e68d8df36073ea320a96bc0db9e8cb71b8c3d8174bf544b4054",
+      "displayHash": "0x43f06f43d1b76e68d8df36073ea320a96bc0db9e8cb71b8c3d8174bf544b4054",
       "issuingAuthority": "Coalition for Adolescent Mental Health AI Standards (CAMAS)",
       "anchor": {
-        "method": "OriginStamp", "chain": "Bitcoin",
-        "bitcoinTx": "0x782a9122f4133c40fe6c44c82f6b3bd33305d5dc61dc15d05c2426a587b5e080",
-        "merkleRoot": "0xb59acf725fc43555e876f2a68517816c876b89dcf8ffabe4b8e0fe6b2ce125f2",
-        "status": "confirmed", "timestamp": "2026-05-06T01:11:07Z"
+        "method": "OpenTimestamps", "chain": "Bitcoin",
+        "receipt": "cads/clinical-safeguarding-protocol-minor-v2.1.md.ots",
+        "status": "pending"
+      },
+      "previousVersion": {
+        "version": "2.0",
+        "file": "cads/clinical-safeguarding-protocol-minor-v2.md",
+        "expectedHash": "aeff2d668a7b79167e16f3a906eb010b56e012920fccd60af7d4b129bd2eec9d",
+        "anchor": {
+          "method": "OriginStamp", "chain": "Bitcoin",
+          "bitcoinTx": "0x782a9122f4133c40fe6c44c82f6b3bd33305d5dc61dc15d05c2426a587b5e080",
+          "status": "confirmed", "timestamp": "2026-05-06T01:11:07Z"
+        }
       }
     }
   },
+  "policies": {
+    "sentinel": {
+      "file": "policies/sentinel.md",
+      "version": "2.1",
+      "expectedHash": "1a30665c2356b625e65d6a74d12d424c1add80169214370724f115d29f3a5ccb",
+      "displayHash": "0x1a30665c2356b625e65d6a74d12d424c1add80169214370724f115d29f3a5ccb",
+      "anchor": {
+        "method": "OpenTimestamps", "chain": "Bitcoin",
+        "receipt": "policies/sentinel.md.ots",
+        "status": "pending"
+      }
+    },
+    "advisor": {
+      "file": "policies/advisor.md",
+      "expectedHash": "66289f2fba4a1db6b0f7aee398220dc0b2f5fb91b01f3acd11af7931532f6958",
+      "displayHash": "0x66289f2fba4a1db6b0f7aee398220dc0b2f5fb91b01f3acd11af7931532f6958"
+    },
+    "contrast-governed": {
+      "file": "policies/contrast-governed.md",
+      "expectedHash": "d35390a41d816560bd881fbd5b3dedfb652762b05d021bc1740c932e2a728a5d",
+      "displayHash": "0xd35390a41d816560bd881fbd5b3dedfb652762b05d021bc1740c932e2a728a5d"
+    }
+  },
   "purposes": {
-    "sentinel": { "policy": "policies/sentinel.md",          "cad": "clinical", "maxTokens": 1000, "maxInputTokens": 8000 },
-    "contrast": { "policy": "policies/contrast-governed.md", "cad": "meta",     "maxTokens": 400,  "maxInputTokens": 1000 },
-    "advisor":  { "policy": "policies/advisor.md",           "cad": "meta",     "maxTokens": 1000, "maxInputTokens": 2000 }
+    "sentinel": {
+      "policy": "policies/sentinel.md",
+      "policyHash": "1a30665c2356b625e65d6a74d12d424c1add80169214370724f115d29f3a5ccb",
+      "policyAnchor": {
+        "method": "OpenTimestamps", "chain": "Bitcoin",
+        "receipt": "policies/sentinel.md.ots", "status": "pending"
+      },
+      "cad": "clinical", "maxTokens": 4000, "maxInputTokens": 8000
+    },
+    "contrast": {
+      "policy": "policies/contrast-governed.md",
+      "policyHash": "d35390a41d816560bd881fbd5b3dedfb652762b05d021bc1740c932e2a728a5d",
+      "cad": "meta", "maxTokens": 400, "maxInputTokens": 1000
+    },
+    "advisor": {
+      "policy": "policies/advisor.md",
+      "policyHash": "66289f2fba4a1db6b0f7aee398220dc0b2f5fb91b01f3acd11af7931532f6958",
+      "cad": "meta", "maxTokens": 1000, "maxInputTokens": 2000
+    }
   }
 }

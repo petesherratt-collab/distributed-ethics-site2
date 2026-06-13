@@ -33,9 +33,15 @@ function loadGovernance(cadEntry) {
   return { content, verified: computed === cadEntry.expectedHash, computedHash: `0x${computed}` };
 }
 
-function loadPolicy(policyPath) {
+function loadPolicy(policyPath, expectedHash) {
+  // The policy (the agent's operating instructions) shapes governed output as much as the CAD,
+  // so it must be part of the integrity guarantee — verified, not loaded blind. If a purpose
+  // declares no policyHash, the policy is treated as UNVERIFIED and the request fails closed.
   const path = join(GOV_DIR, policyPath);
-  return existsSync(path) ? readFileSync(path, 'utf-8') : null;
+  if (!existsSync(path)) return { content: null, verified: false, error: 'Policy file missing from deployment' };
+  const content = readFileSync(path, 'utf-8');
+  const computed = createHash('sha256').update(content).digest('hex');
+  return { content, verified: !!expectedHash && computed === expectedHash, computedHash: `0x${computed}` };
 }
 
 export default async function handler(req, res) {
@@ -119,7 +125,7 @@ export default async function handler(req, res) {
 
   const cadEntry = registry.cads[cfg.cad];
   const gov = loadGovernance(cadEntry);
-  const policy = loadPolicy(cfg.policy);
+  const pol = loadPolicy(cfg.policy, cfg.policyHash);
 
   const governance = {
     purpose,
@@ -130,20 +136,25 @@ export default async function handler(req, res) {
     computedHash: gov.computedHash ?? null,
     anchor: cadEntry.anchor ?? null,
     issuingAuthority: cadEntry.issuingAuthority ?? null,
-    error: gov.error ?? null
+    policyVerified: pol.verified,
+    policyHash: cfg.policyHash ? `0x${cfg.policyHash}` : null,
+    policyComputedHash: pol.computedHash ?? null,
+    policyAnchor: cfg.policyAnchor ?? null,
+    error: gov.error ?? pol.error ?? null
   };
 
-  // ── FAIL CLOSED. If the governing document does not verify (missing, tampered, or hash ──
-  //    mismatch) the gateway refuses to produce governed output. A mismatch is a governance ──
-  //    breach, not a warning — and it is the demo's whole point that the failure is visible. ──
-  if (!gov.verified || !policy) {
+  // ── FAIL CLOSED on EITHER the CAD or the policy. Both shape governed output, so both must ──
+  //    verify against their published hash. A mismatch (missing, tampered, or undeclared hash) ──
+  //    is a governance breach, not a warning — and it is the demo's whole point that the ──
+  //    failure is visible. ──
+  if (!gov.verified || !pol.verified) {
     return res.status(409).json({
       error: 'GOVERNANCE_UNVERIFIED — refusing to produce governed output.',
       _governance: governance
     });
   }
 
-  const systemPrompt = CONSTITUTIONAL_PREAMBLE + gov.content + '\n\n---\n\n' + policy;
+  const systemPrompt = CONSTITUTIONAL_PREAMBLE + gov.content + '\n\n---\n\n' + pol.content;
 
   try {
     const r = await fetch(OPENROUTER, {
