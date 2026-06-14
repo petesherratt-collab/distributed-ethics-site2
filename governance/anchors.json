@@ -24,7 +24,7 @@
       "anchor": {
         "method": "OpenTimestamps", "chain": "Bitcoin",
         "receipt": "cads/clinical-safeguarding-protocol-minor-v2.1.md.ots",
-        "status": "pending"
+        "status": "confirmed", "bitcoinBlock": 953492, "timestamp": "2026-06-13T08:50:49Z"
       },
       "previousVersion": {
         "version": "2.0",
@@ -47,7 +47,7 @@
       "anchor": {
         "method": "OpenTimestamps", "chain": "Bitcoin",
         "receipt": "policies/sentinel.md.ots",
-        "status": "pending"
+        "status": "confirmed", "bitcoinBlock": 953492, "timestamp": "2026-06-13T08:50:49Z"
       }
     },
     "advisor": {
@@ -67,7 +67,7 @@
       "policyHash": "1a30665c2356b625e65d6a74d12d424c1add80169214370724f115d29f3a5ccb",
       "policyAnchor": {
         "method": "OpenTimestamps", "chain": "Bitcoin",
-        "receipt": "policies/sentinel.md.ots", "status": "pending"
+        "receipt": "policies/sentinel.md.ots", "status": "confirmed", "bitcoinBlock": 953492, "timestamp": "2026-06-13T08:50:49Z"
       },
       "cad": "clinical", "maxTokens": 4000, "maxInputTokens": 8000
     },
