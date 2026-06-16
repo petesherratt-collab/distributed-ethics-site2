@@ -5,3 +5,11 @@ governance/**/*.md  text eol=lf
 # OpenTimestamps receipts are binary — never apply EOL/text conversion.
 governance/**/*.ots binary
 *.ots               binary
+# Eval harness: the cad/ copy is the exact instrument the concordance ran against,
+# and the runners read these byte-for-byte. Pin to LF so checkout normalization
+# can't change content (and thus reproducibility) across platforms.
+eval/**/*.md        text eol=lf
+eval/**/*.json      text eol=lf
+eval/**/*.jsonl     text eol=lf
+eval/**/*.py        text eol=lf
+eval/**/*.mjs       text eol=lf
