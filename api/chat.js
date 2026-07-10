@@ -88,8 +88,16 @@ export default async function handler(req, res) {
   // *message* embedded in the array (a top-level `system` field check isn't enough — without
   // this, an attacker can sneak `{role:'system', content:'…'}` into messages and the upstream
   // gets TWO system messages, with the second one potentially winning).
-  if (messages.some(m => m && m.role !== 'user' && m.role !== 'assistant')) {
+  if (messages.some(m => !m || (m.role !== 'user' && m.role !== 'assistant'))) {
     return res.status(400).json({ error: 'Only user/assistant roles are accepted in "messages"; system is server-owned.' });
+  }
+  // Content must be a plain string. Without this, a caller can send `content` as an array of
+  // content blocks (or any non-string) — the token-cap reducer below counts non-strings as 0,
+  // so an oversized/structured payload skips the ingress cap entirely and is forwarded verbatim
+  // to the upstream model. That defeats both the injection-surface bound AND the denial-of-wallet
+  // bound. Reject non-string content here, before the cap is computed.
+  if (messages.some(m => typeof m.content !== 'string')) {
+    return res.status(400).json({ error: 'Each message "content" must be a string.' });
   }
 
   let registry;
