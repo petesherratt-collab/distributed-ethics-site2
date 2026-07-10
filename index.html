@@ -1097,7 +1097,7 @@ async function verifyHash() {
     result.innerHTML = `✓ HASH MATCH — Document is unmodified<br><span style="opacity:0.7">Computed: ${computed}</span>`;
   } else {
     result.className = 'verify-result mismatch';
-    result.innerHTML = `✗ HASH MISMATCH — Document has been altered<br><span style="opacity:0.7">Expected: ${knownHash}<br>Computed: ${computed}</span>`;
+    result.innerHTML = `✗ HASH MISMATCH — Document has been altered<br><span style="opacity:0.7">Expected: ${escapeHtml(knownHash)}<br>Computed: ${computed}</span>`;
   }
 }
 
@@ -1113,6 +1113,17 @@ async function loadDemoVerify() {
 // in `_governance`. This renders THAT verdict, not a re-hash done in the browser. The
 // distinction matters: under INTEGRITY-5 of the meta-CAD, a "verified" claim must come
 // from the layer that actually checked, not from a UI that asserts it.
+// Scope of the server's check: it confirms the operative CAD/policy hashes to the value in
+// the published manifest — it does NOT itself verify the OpenTimestamps/Bitcoin anchor. The
+// anchor is published so a third party can confirm that manifest hash out-of-band; the badge
+// wording is deliberately "Hash-verified", not "anchor-verified".
+// Escape HTML before interpolating any attacker-influenceable text into innerHTML.
+// Model output (Sentinel / Contrast / Advisor panes) is steerable by whoever supplies the
+// input, and the "known hash" field is raw user input — so all of it must be neutralised
+// before it reaches an innerHTML sink, or a payload like <img src=x onerror=…> executes.
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 function trunc(h) { return h ? h.slice(0, 12) + '…' + h.slice(-6) : '—'; }
 function renderGovBadge(elId, gov) {
   const el = document.getElementById(elId);
@@ -1124,13 +1135,17 @@ function renderGovBadge(elId, gov) {
   const blockBit = block ? `<a href="https://mempool.space/block/${anchor.bitcoinBlock || ''}" target="_blank" rel="noopener">${anchor.bitcoinBlock ? 'block ' + anchor.bitcoinBlock : 'tx ' + trunc(anchor.bitcoinTx)}</a>` : '—';
   el.className = 'gov-badge shown ' + (v ? 'verified' : 'unverified');
   el.innerHTML =
-    `<span class="gb-state ${v ? 'v' : 'u'}">${v ? '✓ Server-verified' : '✗ UNVERIFIED'}</span>` +
-    `<div class="gb-row"><span class="gb-k">CAD:</span> <span class="gb-v">${gov.cadId || '—'} v${gov.version || '?'}</span></div>` +
+    // "Hash-verified", not "Server-verified": the gateway recomputes the SHA-256 of the
+    // operative CAD/policy and confirms it matches the hash in the published manifest. It does
+    // NOT re-verify the Bitcoin anchor at runtime — that proof is published for anyone to check
+    // independently (below), and the badge must not imply the server did that check.
+    `<span class="gb-state ${v ? 'v' : 'u'}">${v ? '✓ Hash-verified' : '✗ UNVERIFIED'}</span>` +
+    `<div class="gb-row"><span class="gb-k">CAD:</span> <span class="gb-v">${escapeHtml(gov.cadId || '—')} v${escapeHtml(gov.version || '?')}</span></div>` +
     `<div class="gb-row"><span class="gb-k">Hash:</span> <span class="gb-v">${trunc(gov.protocolHash?.replace(/^0x/, ''))}</span></div>` +
     (gov.computedHash && gov.protocolHash && gov.computedHash !== gov.protocolHash
       ? `<div class="gb-row"><span class="gb-k">Computed:</span> <span class="gb-v" style="color:var(--red)">${trunc(gov.computedHash.replace(/^0x/, ''))} (mismatch)</span></div>`
       : '') +
-    `<div class="gb-row"><span class="gb-k">Anchor:</span> <span class="gb-v">${anchor.method || '?'} / ${anchor.chain || '?'} · ${blockBit} · ${anchor.timestamp || ''}</span></div>`;
+    `<div class="gb-row"><span class="gb-k">Anchor:</span> <span class="gb-v">${escapeHtml(anchor.method || '?')} / ${escapeHtml(anchor.chain || '?')} · ${blockBit} · ${escapeHtml(anchor.timestamp || '')} <span style="opacity:0.6">(published — verify independently)</span></span></div>`;
 }
 
 // ─── Tool 2: Sentinel ────────────────────────────────────────────────────────
@@ -1178,7 +1193,7 @@ function formatSentinelOutput(text) {
     .split('\n\n')
     .map(para => {
       if (!para.trim()) return '';
-      para = para.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      para = escapeHtml(para).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       const gateMatch = para.match(/^(Gate [A-G]|[A-G]\.)/i);
       if (gateMatch) {
         const hasRisk = /elevated|urgent|crisis|concern|risk|flag/i.test(para);
@@ -1265,7 +1280,7 @@ async function runContrast() {
     });
     const data = await response.json();
     const text = data.content?.[0]?.text || 'Error.';
-    governed.innerHTML = text.split('\n').filter(l => l.trim()).map(l => `<p>${l}</p>`).join('');
+    governed.innerHTML = text.split('\n').filter(l => l.trim()).map(l => `<p>${escapeHtml(l)}</p>`).join('');
     renderGovBadge('contrast-gov', data._governance);
   } catch (e) {
     governed.innerHTML = '<p style="color:var(--red)">Connection error.</p>';
@@ -1358,7 +1373,7 @@ function appendAdvisorMsg(role, text) {
 
   if (role === 'assistant') {
     body.innerHTML = text.split('\n\n').filter(p => p.trim()).map(p => {
-      p = p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      p = escapeHtml(p).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       return `<p>${p.trim()}</p>`;
     }).join('');
   } else {

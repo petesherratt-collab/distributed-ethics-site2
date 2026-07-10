@@ -109,6 +109,25 @@ malformed request into an opaque 500/502 instead of a clean 400.
 - The **judge rubric** is unusually careful about not being injected by the
   transcript it evaluates, and about the "did X vs described X" distinction.
 
+## Remediation (applied 2026-07-10)
+
+- **Finding 1** — badge relabelled from "Server-verified" to "Hash-verified" with an
+  explicit "(published — verify independently)" note on the anchor row, and the code
+  comments now scope the server's check to *hash-vs-manifest*, not anchor verification.
+  Runtime OTS/Bitcoin verification is left as a follow-up (needs a verification lib and
+  external egress; out of scope for a wording/honesty fix).
+- **Finding 2** — gateway now rejects any message whose `content` is not a string
+  (`api/chat.js`), closing the array-content route around the ingress token cap.
+- **Finding 3** — added `escapeHtml()` and applied it to all model-output renderers
+  (Sentinel, Contrast, Advisor) and the user-supplied "known hash" field in `index.html`.
+- **Finding 5** — `null`/`undefined` messages now rejected by the role check.
+- **Finding 4** — documentation/methodology note only; no code change.
+
+Verified locally: `node --check` on both files; a mocked-request harness confirmed
+array-content → 400, valid string content passes the guards, null message → 400; and
+`escapeHtml('<img src=x onerror=…>')` renders inert. Not smoke-tested against the live
+Vercel deployment (egress to that host is blocked from the review environment).
+
 ## Priority order
 
 1. Finding 1 — it undercuts the framework's headline claim about what "verified"
